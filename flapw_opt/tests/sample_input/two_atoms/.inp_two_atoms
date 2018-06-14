@@ -1,0 +1,11 @@
+Si bulk
+
+&input film=F /
+
+&lattice latsys='cF', a0=1.8897269, a=5.43 /
+
+ 2
+14  0.125  0.125  0.125 
+11 -0.135 -0.125 -0.125 
+
+&kpt div1=9 div2=9 div3=9 /

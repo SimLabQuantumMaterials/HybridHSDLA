@@ -1,0 +1,4 @@
+      MODULE m_precision
+      INTEGER,PARAMETER :: rkind=SELECTED_REAL_KIND(12)
+      INTEGER,PARAMETER :: ckind=SELECTED_REAL_KIND(12)
+      END MODULE

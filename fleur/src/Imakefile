@@ -1,0 +1,387 @@
+/* ----------------------------------------
+      Generate Makefile for FLEUR code
+
+define the hardware platform: choose one of 
+ juropa      (Nehalem-EP cluster, mpich & scalapack)
+ bgl_p       (BlueGene/P with xlf) 
+ ibm_sp4     (IBM p690 sp4 with mpxlf_r, pessl)
+ ibm_aix     (IBM AIX workstation or server, xlf, essl)
+ cray_t3e    (Cray T3e 1200 -- last update 06/2004)
+ cray_t90    (Cray T90 -- out of production since 2002)
+ dec_alpha   (Digital or Compaq alpha workstations, f90 compiler with dxml)
+ linux_amd   (Athlon PC with pgf90 compiler)
+ linux_intel (Intel PC with ifc compiler)
+ linux_g95   (Intel PC with g95 compiler)
+ linux_par   (Linux cluster, mpich & ifc-compiler)
+---------------------------------------- */
+#define linux_intel
+/* ----------------------------------------
+define one or more of 
+ inversion  (systems with structural symmetry)
+ soc        (possibility to include spin-orbit coupling)
+ apw        (use of the APW+LO method)
+ core       (linear continuation of core potential)
+ html       (produces inf.html file as output)
+ hdf        (include hdf-support e.g. to use sclapack)
+ debug      (set compiler switches for debugging)
+ wann       (compile code for wannierization)
+ f_90       (make compilation work with older compilers)
+---------------------------------------- */
+#define inversion 
+/* #define hdf */
+#define f_90
+/*--------------------------------------------------------------------*/
+/* these flags appear in:
+ CPP_APW  : abcof.o cdnval.o force_a21.o force_a8.o \
+            gf_init.o hsint.o hssphn.o hsvac.o inped.o \
+            pwden.o slomat.o to_pulay.o dimens.o setlomap.o
+ CPP_SOC  : abclocdn.o abclocdn_pulay.o dimens.o eigen.o \
+            hsohelp.o pwden_old.o sympsi.o vacden.o abcof.o \
+            cdnval.o inped.o pwden.o to_pulay.o
+ CPP_CORE : cored.o coredr.o etabinit.o dimens.o
+ CPP_HTML : fleur.o dimens.o
+ CPP_HDF  : alineso.o cdnval.o eigen.o eigenso.o fermie.o \
+            fleur.o hssphn.o dimens.o ssomat.o
+ CPP_WANN : fleur.o
+ CPP_F90  : eigen.o geneigprobl.o zsymsecloc.o
+*/
+/*----------------------------------------------------------------------------*/
+
+/* machine dependent quantities */
+
+/*###############################################################################
+  Options for JUROPA
+###############################################################################*/
+#ifdef juropa
+FC= mpif90
+CPP1= -DCPP_APC -DCPP_DOUBLE -DCPP_MPI -DCPP_EVP
+#ifdef debug
+FFLAGS= -g  -axW -implicitnone -cm -W0 -r8 -assume byterecl
+FFLAGS_CFFT = -g -implicitnone -cm -W0 -r8 -assume byterecl
+#else
+FFLAGS= -O4 -axW -implicitnone -cm -W0 -r8 -assume byterecl
+FFLAGS_CFFT =    -implicitnone -cm -W0 -r8 -assume byterecl
+#endif
+#ifdef hdf
+HDFROOT= /usr/local/hdf5
+CFFT= cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mingeselle.o mpi_col_eig.o mpi_col_eigJ.o mpi_col_dos.o mpi_bc_st.o erf.o hdf_tools.o eig66_hdf.o ssubredist1.o ssubredist2.o chani.o
+LDFLAGS= -L $(HDFROOT)/lib -lhdf5_fortran -lhdf5 -lz -L /usr/local/szip/lib -lsz -i_dynamic -L${MKLROOT}/lib/em64t -lmkl_scalapack_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_lapack -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_lapack -lmkl_core -liomp5 -lpthread
+HDFFLGS= -I $(HDFROOT)/include
+#else
+CFFT= cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mingeselle.o mpi_col_eig.o mpi_col_eigJ.o mpi_col_dos.o mpi_bc_st.o erf.o
+LDFLAGS= -L ${HOME}/hdf5 -lhdf5_fortran -lmkl -lmkl_blas -lhdf5 -lz -i_dynamic
+#endif
+#endif
+
+/*###############################################################################
+  Options for JUGENE (BlueGene/P)
+  you may also want to add the following to your profile:
+ 
+  export XLFRTEOPTS=$XLFRTEOPTS:buffering=disable_all
+
+###############################################################################*/
+#ifdef bgl_p
+BGP_SYS = /bgsys/drivers/ppcfloor
+FC= $(BGP_SYS)/comm/bin/mpixlf95_r
+FCS=$(BGP_SYS)/comm/bin/xlf95_r
+CPP1= -WF,-DCPP_AIX,-DCPP_MPI,-DCPP_DOUBLE,-DCPP_EVP
+#ifdef debug
+FFLAGS= -g -d -qnosave -qrealsize=8 -qdpc=e  -qinitauto=ffffffff -qflttrap=nanq -C -I$(BGP_SYS)/comm/include -I../hdf5
+#else
+FFLAGS= -O4 -qfixed=72 -qnosave -qrealsize=8 -qdpc=e -I$(BGP_SYS)/comm/include  -qarch=450 -qtune=450 -I../hdf5
+#endif
+FFLAGS_O2= -O2 -qfixed=72 -qnosave -qrealsize=8 -qdpc=e -I$(BGP_SYS)/comm/include -I../hdf5
+#ifdef hdf
+CFFT = cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mpi_col_eig.o mpi_col_eigJ.o \
+        mingeselle.o hdf_tools.o eig66_hdf.o mpi_col_dos.o \
+        mpi_bc_st.o chani.o ssubredist1.o ssubredist2.o
+LDFLAGS=  -L/opt/ibmcmp/xlmass/bg/4.4/bglib -lmassv -L$(BGP_SYS)/lib \
+	 -L/bgsys/local/lib -lscalapack -llapack -lesslbg -lblacsF77init -lblacs -lblacsF77init \
+	 -L../hdf5 -lhdf5_fortran -lhdf5
+HDFFLGS= -I../hdf5
+#else
+CFFT= cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mpi_col_eig.o mpi_col_eigJ.o \
+        mpi_bc_st.o mpi_col_dos.o mingeselle.o chani.o ssubredist1.o ssubredist2.o
+LDFLAGS= -L/opt/ibmcmp/xlmass/bg/4.4/bglib -lmassv -L$(BGP_SYS)/lib \
+         -L/bgsys/local/lib -lscalapack -llapack -lesslbg -lblacsF77init -lblacs -lblacsF77init 
+#endif
+#define xlfpp
+#endif
+/*###############################################################################
+  Options for Jupp (SP4)
+  you may also want to add the following to your profile:
+ 
+  module load hdf5-64bit.par
+  module load llrun
+  export XLFRTEOPTS=$XLFRTEOPTS:buffering=disable_all
+
+###############################################################################*/
+#ifdef ibm_sp4
+FC= mpxlf95_r
+FCS=xlf_r
+CPP1= -WF,-DCPP_AIX,-DCPP_MPI,-DCPP_DOUBLE,-DCPP_EVP
+#ifdef debug
+FFLAGS= -qfixed -g -d -q64 -qnosave -qrealsize=8 -qdpc=e  -qinitauto=ffffffff -qflttrap=nanq -C 
+FFLAGS_O2= FFLAGS
+#else
+FFLAGS=    -qfixed -O4 -q64 -qnosave -qrealsize=8 -qdpc=e
+FFLAGS_O2= -qfixed -O2 -q64 -qnosave -qrealsize=8 -qdpc=e
+#endif
+#ifdef hdf
+CFFT = cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mpi_col_eig.o  mpi_col_eigJ.o \
+        mingeselle.o hdf_tools.o eig66_hdf.o mpi_col_dos.o \
+        mpi_bc_st.o chani.o ssubredist1.o ssubredist2.o
+LDFLAGS= -lz -lesslsmp -lpesslsmp -lscalapack -lblacssmp -llapack \
+         -L/usr/local/beta/hdf5-64bit.par/LOCALlib -lhdf5 -lhdf5_fortran \
+         -bmaxdata:0x80000000 -bmaxstack:134217728 -q64
+HDFFLGS= -I/usr/local/beta/hdf5-64bit.par/LOCALlib
+#else
+CFFT= cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mpi_col_eig.o mpi_col_eigJ.o \
+        mpi_bc_st.o mpi_col_dos.o mingeselle.o chani.o ssubredist1.o ssubredist2.o
+LDFLAGS= -q64 -lz -lessl -llapack -lblacspd -lblacsF77initpd -lscalapack \
+         -bmaxdata:0x80000000 -bmaxstack:134217728
+#endif
+#define xlfpp
+#endif
+
+/*###############################################################################
+  Options for IBM AIX workstations
+	(The -d option keep the files that are produced by the preprocessor.
+  	These files are called Ffile.f (if the fortran source is called file.F).
+  	This option has to be used when using the debugger, since the debugger
+  	(xldb) considers them the program source.
+###############################################################################*/
+#ifdef ibm_aix
+FC= xlf
+FCS= xlf
+CPP1=-WF,-DCPP_AIX,-DCPP_DOUBLE
+#ifdef debug
+FFLAGS= -g -d -C -qflttrap=ov:zero:inv:en -q sigtrap -qrealsize=8
+#else
+FFLAGS= -O5 -qrealsize=8
+#endif
+FFLAGS_O2= -qrealsize=8
+CFFT= cfft_ws.o
+LDFLAGS= -llapack -lblas -lessl
+#define xlfpp
+#endif
+
+/*###############################################################################
+  Options for Cray T3E
+###############################################################################*/
+#ifdef  cray_t3e
+FC= f90
+CPP1= -F -DCPP_T90 -DCPP_MPI
+#ifdef debug
+FFLAGS= -g -Rabc -d p -e it
+#else
+FFLAGS= -O3 -d p -e it
+#endif
+CFFT= cfft_cray.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o \
+       mingeselle.o chani.o mpi_col_eig.o  ssubredist1.o ssubredist2.o
+LDFLAGS= -D preset=inf -lmpi -lsci -L../eigsol -lpseps_T3E
+#endif
+
+/*###############################################################################
+  Options for Cray T90
+###############################################################################*/
+#ifdef cray_t90
+FC= f90
+CPP1= -F -DCPP_T90
+#ifdef debug
+FFLAGS= -g -Rabc -dp -ei -v
+#else
+FFLAGS= -O2 task0 -m2 -dp -ei -v
+#endif
+CFFT=  cfft_cray.o
+LDFLAGS= -bloadmap:LOADMAP -D preset=inf
+#endif
+
+/*###############################################################################
+  Options for Digital (Compaq) Alpha Workstations
+###############################################################################*/
+#ifdef dec_alpha
+#define f_90
+FC= f90
+CPP1= -cpp -DCPP_DEC -DCPP_DOUBLE
+#ifdef debug
+FFLAGS= -g -r8 -automatic  -assume byterecl
+#else
+FFLAGS= -r8 -O3 -automatic  -assume byterecl
+#endif
+CFFT= cfft_ws.o zgerc.o
+LDFLAGS= -ldxml -non_shared
+#endif
+
+/*###############################################################################
+  Options for Intel Linux with g95 compiler
+###############################################################################*/
+#ifdef linux_g95
+FC= $(HOME)/g95-install/bin/g95
+CPP1= -DCPP_DOUBLE
+#ifdef debug
+FFLAGS= -g -r8
+#else
+FFLAGS= -O5 -r8  
+#endif
+CFFT=  cfft_ws.o erf.o
+LDFLAGS= -L$(HOME)/LAPACK -llapack_AMDx64 -lblas_AMDx64
+#endif
+
+/*###### on my MAC:
+FC= ../g95-install/bin/powerpc-apple-darwin6.8-g95
+LDFLAGS= -L../lib/lib -llapack -lcblas -lf77blas -latlas
+#######*/
+
+/*###############################################################################
+  Options for Intel Linux with ifc compiler
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/intel/mkl/current/lib/32/
+###############################################################################*/
+#ifdef linux_intel
+FC= ifort
+CPP1= -DCPP_APC -DCPP_DOUBLE
+#ifdef debug
+FFLAGS= -cm -W0 -g -r8  -assume byterecl
+#else
+FFLAGS= -cm -W0 -O4 -r8 -assume byterecl
+#endif
+CFFT=  cfft_ws.o erf.o dlamch.o
+/* LDFLAGS= -L /usr/local/intel/mkl/current/lib/32 -lmkl -lguide -lpthread -i_dynamic \
+        -Wl,-rpath=/usr/local/intel/mkl/current/lib/32 -Wl,-rpath=/usr/local/intel/fc/current/lib */
+LDFLAGS= -L /opt/intel/composer_xe_2013.3.163/mkl/lib/intel64/ -mkl -liomp5 -lpthread -i_dynamic \
+        -Wl,-rpath=/usr/local/intel/mkl/current/lib/32 -Wl,-rpath=/usr/local/intel/fc/current/lib
+#endif
+
+FFLAGS_CFFT = $(FFLAGS)
+/*###############################################################################
+  Options for AMD Linux with pgf90 compiler
+###############################################################################*/
+#ifdef linux_amd 
+FC= pgf90
+CPP1= -DCPP_APC -DCPP_DOUBLE
+#ifdef debug
+FFLAGS= -g -r8 -Mbounds
+#else
+FFLAGS= -fast -O2 -pc 64 -r8
+#endif
+FFLAGS_CFFT = -r8
+CFFT= cfft_ws.o
+LDFLAGS= -llapack -lblas
+#endif
+/*###############################################################################
+  Options for parallel LINUX with pgf90 compiler
+###############################################################################*/
+#ifdef linux_par
+FC= mpif90
+CPP1= -DCPP_AIX -DCPP_DOUBLE -DCPP_MPI
+#ifdef debug
+FFLAGS= -g -r8  
+#else
+FFLAGS= -O3 -r8  -assume byterecl
+FFLAGS_CFFT = -r8 -assume byterecl
+#endif
+CFFT= cfft_ws.o mpi_bc_all.o mpi_col_den.o mpi_make_groups.o mingeselle.o \
+      mpi_col_eig.o mpi_col_eigJ.o  mpi_col_dos.o mpi_bc_st.o erf.o
+LDFLAGS= -llapack -lblas
+LDFLAGS= -L /usr/local/intel/mkl/current/lib/32 -lmkl -lguide -lpthread -i_dynamic \
+        -Wl,-rpath=/usr/local/intel/mkl/current/lib/32 -Wl,-rpath=/usr/local/intel/fc/current/lib
+#endif
+/*###############################################################################
+  Options for SGI ORIGIN 200 (untested)
+   FFLAGS=  -r8  -cpp -DCPP_DOUBLE -DCPP_DEC
+   FFLAGS=  -r8  -mips4 -r10000 -DCPP_DOUBLE -DCPP_DEC
+   LDFLAGS= -lcomplib.sgimath
+###############################################################################*/
+
+/*--------------------------------------------------------------------*/
+/* c-preprocessor flags */
+
+#ifdef inversion
+#ifdef xlfpp
+CPP2= $(CPP1),-DCPP_INVERSION
+#else
+CPP2= $(CPP1) -DCPP_INVERSION
+#endif
+#else
+CPP2= $(CPP1)
+#endif
+
+#ifdef soc
+#ifdef xlfpp
+CPP3= $(CPP2),-DCPP_SOC
+#else
+CPP3= $(CPP2) -DCPP_SOC
+#endif
+#else
+CPP3= $(CPP2)
+#endif
+
+#ifdef apw
+#ifdef xlfpp
+CPP4= $(CPP3),-DCPP_APW
+#else
+CPP4= $(CPP3) -DCPP_APW
+#endif
+#else
+CPP4= $(CPP3)
+#endif
+
+#ifdef core
+#ifdef xlfpp
+CPP5= $(CPP4),-DCPP_CORE
+#else
+CPP5= $(CPP4) -DCPP_CORE
+#endif
+#else
+CPP5= $(CPP4)
+#endif
+
+#ifdef html
+#ifdef xlfpp
+CPP6= $(CPP5),-DCPP_HTML
+#else
+CPP6= $(CPP5) -DCPP_HTML
+#endif
+#else
+CPP6= $(CPP5)
+#endif
+
+#ifdef gf
+#ifdef xlfpp
+CPP7= $(CPP6),-DCPP_GF
+#else
+CPP7= $(CPP6) -DCPP_GF
+#endif
+#else
+CPP7= $(CPP6)
+#endif
+
+#ifdef hdf
+#ifdef xlfpp
+CPP8= $(CPP7),-DCPP_HDF
+#else
+CPP8= $(CPP7) -DCPP_HDF
+#endif
+#else
+CPP8= $(CPP7)
+#endif
+
+#ifdef f_90
+#ifdef xlfpp
+CPP9= $(CPP8),-DCPP_F90
+#else
+CPP9= $(CPP8) -DCPP_F90
+#endif
+#else
+CPP9= $(CPP8)
+#endif
+
+#ifdef wann
+#ifdef xlfpp
+CPPS= $(CPP9),-DCPP_WANN
+#else
+CPPS= $(CPP9) -DCPP_WANN
+#endif
+#else
+CPPS= $(CPP9)
+#endif

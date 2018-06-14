@@ -1,0 +1,5 @@
+#pragma once
+/** \file
+ * Contains hardcoded paths/values configured by CMake.
+ */
+const char* DEFAULT_DUMP_DIR = "${SAMPLES_DIR}/two_atoms";

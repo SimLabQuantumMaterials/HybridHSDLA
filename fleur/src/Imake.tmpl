@@ -1,0 +1,201 @@
+#include "Imakefile"
+
+/* rules to make the program */
+
+.SUFFIXES: .F .f .f90 .F90
+
+.F.o:
+	$(FC) $(FFLAGS) $(CPPS) -c $<
+
+.f.o:
+	$(FC) $(FFLAGS) -c $<
+#ifdef ibm_sp4
+.F90.o:
+	$(FC) $(FFLAGS) $(CPPS) -qfree -c $<
+.f90.o:
+	$(FC) $(FFLAGS) -qfree -c $<
+#else
+.F90.o:
+	$(FC) $(FFLAGS) $(CPPS) -c $<
+.f90.o:
+	$(FC) $(FFLAGS) -c $<
+#endif
+
+INV_OBJS= abclocdn.o abclocdn_pulay.o abcof.o aline.o aline_muff.o alineso.o \
+	cdn_read.o cdnval.o chani.o cored.o coredr.o dimen7.o dimens.o eig66_hdf.o \
+	eigen.o eigenso.o etabinit.o fermie.o fleur.o force_a21.o force_a8.o \
+	franza.o geneigprobl.o gw_eig.o gw_vxc.o h_nonmuff.o hlomat.o hsint.o hsohelp.o \
+	hssphn.o hssr_wu.o hsvac.o inped.o inpnoco.o locrectify.o mapatom.o mingeselle.o \
+	od_hsvac.o od_mapatom.o outeig.o orthoglo.o pwden.o pwden_old.o q_int_sl.o \
+	setlomap.o slomat.o ssubredist1.o ssubredist2.o ssomat.o stepf.o sympsi.o \
+	to_pulay.o u_ham.o v_mmp.o vacden.o wann_io.o write_gw.o zsymsecloc.o \
+	wann_mmk0_od_vac.o wann_mmk0_vac.o wann_mmkb_od_vac.o wann_mmkb_vac.o \
+	wann_plot.o wann_real.o wannier.o wann_2dvacabcof.o wann_plot_vac.o \
+	wann_rw_eig.o wann_plotw90.o wannier_to_lapw.o wann_plot_um_dat.o
+
+CPP_OBJS= apws.o bandstr1.o broyden.o calculator.o cdnovlp.o cfft_cray.o corg91.o cpu_time.o \
+          fergwt.o fermie.o fft2d.o fleurenv.o hdf_tools.o intgr.o int_nv.o mix.o mpmom.o \
+          mpi_bc_all.o mpi_bc_st.o mpi_col_den.o mpi_make_groups.o nstm3.o psqpw.o \
+          radflo.o rfft.o ssomat.o strgn_dim.o tlmplm.o vgen.o vmts.o vmtxcg.o xch91.o radsrd.o jcoff2.o
+
+C_OBJS= constants.o cpu_time.o outtime.o ylm4.o grule.o gaussp.o gtest.o ptsym.o lhcal.o  \
+	local_sym.o angle.o dotir.o rcerf.o set_c.o fft3dxc.o fft2d.o fft3d.o convol.o \
+	calculator.o rw_inp.o loddop.o wrtdop.o cotra.o intgr.o pol_angle.o spgrot.o starf.o bravais.o \
+	Ek_write_sl.o orb_comp2.o pwint_sl.o q_int_sl.o q_mt_sl.o slab_dim.o slabgeom.o \
+	orthoglo.o inv3.o phasy1.o outcdn.o xsf_io.o plotdop.o stern.o sphbes.o dsphbs.o  tetra_ef.o \
+	make_tetra.o triang.o trisrt.o nmat_rot.o u_mix.o kprep.o fulstar.o ordstar.o fleurenv.o \
+	tetcon.o kvecon.o kpttet.o kptmop.o divi.o brzone.o bandstr1.o julia.o rw_symfile.o \
+	relax.o relcor.o xcxal.o xcwgn.o xcbh.o xcvwn.o xcpz.o xcall.o matmul.o ss_sym.o soc_sym.o \
+	setcor.o enpara.o dos_bin.o ptdos.o smooth.o grdrsis.o  grdrsvac.o stmix.o \
+	tetra_dos.o evaldos.o doswrite.o mod_symdata.o first_glance.o vec_for_lo.o \
+	corg91.o mkgxyz3.o corl91.o mkgl0.o mkgz.o metr_z0.o metric.o \
+	xch91.o  setmn.o  pbecor2.o corpbe.o exchpbe.o easypbe.o dylm3.o  \
+	lhglptg.o vxcl91.o vxcwb91.o vxcpw91.o excl91.o excpw91.o excwb91.o \
+	excepbe.o vxcepbe.o xcallg.o grdchlh.o potl0.o mkgylm.o vmtxcg.o \
+	od_mkgz.o od_mkgxyz3.o vvacxcg.o prp_xcfft_map.o \
+	visxcg.o hssr_wu.o differ.o apws.o atom2.o boxdim.o brysh1.o brysh2.o broyden.o \
+	checkdop.o cdndif.o orbmom2.o od_chirot.o od_phasy.o qpw_to_nmt.o cylbes.o \
+	dcylbs.o od_cylbes.o cdnovlp.o cdnsp.o pwint.o qsf.o cdntot.o \
+	convn.o cored.o radsra.o radsrd.o radsrdn.o radflo.o radfun.o \
+	diflgr.o dotset.o doswt.o dosint.o dosef.o \
+        rhosphnlo.o cdnmt.o ef_newton.o efield.o  eparas.o  fergwt.o ferhis.o fertri.o fermie.o \
+	f2u.o u2f.o flipcdn.o fitchk.o gaunt.o  rot_den_mat.o \
+	gkptwgt.o html_out.o  ifft235.o inpeig.o int_nv.o int_21.o int_21lo.o \
+	inwint.o  lhglpts.o lodpot.o qfix.o mix.o m_perp.o  mpmom.o nstm3.o outint.o \
+	outeig_muff.o cylpts.o stden.o optional.o pldngen.o \
+	prp_qfft.o prp_xcfft.o prp_qfft_map.o points.o potdis.o psqpw.o qranf.o rad_ovlp.o rfft.o \
+	rhomt.o rhonmt.o rhomt21.o rhonmt21.o write_gw.o spg2set.o d_wigner.o strgn.o \
+	mapatom.o od_mapatom.o od_chisym.o od_strgn1.o stepf.o setup.o sort.o sphpts.o \
+	xy_av_den.o stpot1.o  tlo.o tlmplm.o unor2or.o \
+	modcyli.o modcylk.o vacp5_0.o vacp5_z.o visp5_0.o visp5_z.o \
+	vacfun.o vacudz.o vacuz.o vrfftb.o vrfftf.o vrffti.o vmts.o vintcz.o visxc.o vmtxc.o vvac.o \
+	vvacis.o vvacxc.o vvacxy.o od_vvac.o od_vvacis.o pot_mod.o vgen.o \
+	difcub.o force_a12.o force_a3.o bfgs.o bfgs0.o geo.o \
+	rw_noco.o force_0.o force_a4.o force_w.o totale.o \
+	diff3.o hsoham.o sointg.o sorad.o soinit.o anglso.o sgml.o spnorb.o orbmom.o \
+	setlomap.o setabc1lo.o abccoflo.o setabc1locdn.o rhodirgen.o inpnoco.o \
+	rhomtlo.o rhonmtlo.o force_a21_U.o force_a21_lo.o strgn_dim.o od_kptsgen.o convn_dim.o \
+	prp_xcfft_box.o inpeig_dim.o apws_dim.o parawrite.o dimen7.o qal_21.o \
+	vmatgen.o uj2f.o clebsch.o sgaunt.o umtx.o v_mmp.o u_setup.o  \
+	force_b8.o cgc.o nabla.o dr2fdr.o mcd_init.o u_ham.o grp_k.o h_nonmuff.o aline_muff.o \
+	geneigprobl.o mod_loccoeff.o locrectify.o zsymsecloc.o franza.o hsint.o hsvac.o \
+	outeig.o sympsi.o abclocdn.o abcof.o aline.o cdninf.o pwden_old.o abcrot2.o \
+	pwden.o abclocdn_pulay.o to_pulay.o od_abvac.o vacden.o hsohelp.o alineso.o gw_vxc.o savewigner.o\
+	abcrot.o gw_eig.o slomat.o hlomat.o hssphn.o od_vacfun.o od_hsvac.o eigen.o eigenso.o \
+	dimens.o chkmt.o inped.o n_mat.o force_a21.o force_a8.o cdn_read.o cdnval.o cdngen.o \
+        nshell.o jcoff.o jcoff2.o ssomat.o bmt.o 
+
+WANN=   wann_constants.o wann_io.o wann_utility.o wann_parameters.o \
+	wann_kmesh.o wann_90disentangle.o wann_90overlap.o wann_90wannierise.o \
+	wann_90plot.o wann_read_umatrix.o wann_2dvacabcof.o wann_plot_symm.o \
+	wann_postproc_setup.o wann_kptsreduc.o wann_plot_wannier.o wann_wan90prep.o wann_wannierize.o \
+	wann_hopping.o wann_mmk0_sph.o wann_mmkb_sph.o wann_mmk0_od_vac.o wann_mmnk_symm.o \
+	wann_mmkb_od_vac.o wann_mmk0_vac.o wann_mmkb_vac.o wann_amn.o wann_real.o wann_rw_eig.o \
+	wann_plot_vac.o wann_plot_um_dat.o wann_plotw90.o wann_plot.o wann_lapw_sph_plot.o \
+	wann_lapw_int_plot.o wannier_to_lapw.o wann_plot_from_lapw.o wann_dipole.o wannier.o
+
+FRC= 	diff.o crtail.o kernel1.o kernel2.o inconz.o inconi.o coredir.o findlim.o ccsdnt.o \
+	ccdnup.o felim.o cnodes.o core_.o spratm.o  nwrfst.o cfnorm.o  coreerr.o \
+	corehff.o  rinvgj.o rsimp.o   etabinit.o coredr.o
+
+INP_GO= m_od_types.o m_types.o calculator.o constants.o dotset.o closure.o  setab.o atom_sym.o lattice2.o enpara.o \
+	bravais_symm.o super_check.o symproperties.o generator.o spg_gen.o crystal.o \
+	read_record.o rw_symfile.o struct_input.o cotra.o matmul.o inv3.o write_struct.o \
+	ss_sym.o soc_sym.o soc_or_ssdw.o chkmt.o rw_inp.o set_inp.o xsf_io.o inpgen.o
+
+TYPES=  m_types.o m_od_types.o
+
+#ifdef wann
+fleur.x :     first.obj $(WANN) fleur.o 
+	$(FC) $(TYPES) $(CFFT) $(WANN) $(C_OBJS) $(FRC) fleur.o \
+	$(LDFLAGS) -o fleur.x
+#else
+fleur.x :     first.obj fleur.o
+	$(FC) $(TYPES) $(CFFT) $(C_OBJS) $(FRC) fleur.o \
+	$(LDFLAGS) -o fleur.x
+#endif
+
+first.obj : $(TYPES) $(CFFT) $(C_OBJS) $(FRC)
+
+#ifdef FCS
+inpgen.x :$(INP_GO)
+	$(FCS) $(INP_GO) \
+	$(LDFLAGS) -o inpgen.x
+#else
+inpgen.x :$(INP_GO)
+	$(FC) $(INP_GO) \
+	$(LDFLAGS) -o inpgen.x
+#endif
+
+ssodiag.x : ssodiag.F
+	$(FC) ssodiag.F -free $(LDFLAGS) -o ssodiag.x
+
+rminv :
+	rm $(INV_OBJS) mpi_make_groups.o
+
+rmcpp :
+	rm $(INV_OBJS) $(CPP_OBJS) mpi_make_groups.o
+
+rmall:
+	rm *.o *.mod *.x
+
+cfft_ws.o: cfft_ws.f
+	$(FC) $(FFLAGS_CFFT) -c cfft_ws.f
+#ifdef hdf
+eig66_hdf.o: eig66_hdf.F
+	$(FC) $(FFLAGS) $(HDFFLGS) $(CPPS) -c eig66_hdf.F
+hdf_tools.o: hdf_tools.F
+	$(FC) $(FFLAGS) $(HDFFLGS) $(CPPS) -c hdf_tools.F
+#endif
+#ifdef juropa
+ssubredist1.o: ssubredist1.F
+	$(FC) $(FFLAGS) -free $(CPPS) -c ssubredist1.F
+ssubredist2.o: ssubredist2.F
+	$(FC) $(FFLAGS) -free $(CPPS) -c ssubredist2.F
+chani.o: chani.F
+	$(FC) $(FFLAGS) -extend-source 132 $(CPPS) -c chani.F
+#endif
+#ifdef cray_t3e
+ssubredist1.o: ssubredist1.F
+	$(FC) $(FFLAGS) -f free $(CPPS) -c ssubredist1.F
+ssubredist2.o: ssubredist2.F
+	$(FC) $(FFLAGS) -f free $(CPPS) -c ssubredist2.F
+chani.o: chani.F
+	$(FC) $(FFLAGS) -N 132  $(CPPS) -c chani.F
+#endif
+#ifdef ibm_sp4
+ssubredist1.o: ssubredist1.F
+	mpxlf95_r -O3 -q64 -qrealsize=8 -qdpc=e -qfree $(CPPS) -c ssubredist1.F
+ssubredist2.o: ssubredist2.F
+	mpxlf95_r -O2 -q64 -qrealsize=8 -qdpc=e -qfree $(CPPS) -c ssubredist2.F
+chani.o: chani.F
+	mpxlf95_r -O3 -q64 -qrealsize=8 -qdpc=e -qfixed=132 $(CPPS) -c chani.F
+jcoff2.o: jcoff2.F
+	$(FC) $(FFLAGS) -qzerosize -c jcoff2.F
+#endif
+#ifdef bgl_p
+ssubredist1.o: ssubredist1.F
+	$(FC) -O3 -I$(BGP_SYS)/comm/include   -qarch=450 -qtune=450 -qrealsize=8 -qdpc=e -qfree $(CPPS) -c ssubredist1.F
+ssubredist2.o: ssubredist2.F
+	$(FC) -O3 -I$(BGP_SYS)/comm/include   -qarch=450 -qtune=450 -qrealsize=8 -qdpc=e -qfree $(CPPS) -c ssubredist2.F
+chani.o: chani.F
+	$(FC) -O3 -I$(BGP_SYS)/comm/include   -qarch=450 -qtune=450 -qrealsize=8 -qdpc=e -qfixed=132 $(CPPS) -c chani.F
+jcoff2.o: jcoff2.F
+	$(FC) $(FFLAGS) -qzerosize -c jcoff2.F
+#endif
+#if (defined(ibm_sp4) || defined(ibm_aix))
+vrffti.o: vrffti.f
+	$(FC) $(FFLAGS_O2) -c vrffti.f
+vrfftf.o: vrfftf.f
+	$(FC) $(FFLAGS_O2) -c vrfftf.f
+vrfftb.o: vrfftb.f
+	$(FC) $(FFLAGS_O2) -c vrfftb.f
+hlomat.o: hlomat.F
+	$(FC) $(FFLAGS_O2) $(CPPS) -c hlomat.F
+lhcal.o: lhcal.f
+	$(FC) $(FFLAGS_O2) $(CPPS) -c lhcal.f
+#endif
+#if (defined(linux_amd) || defined(linux_intel))
+dlamch.o: dlamch.f
+	$(FC) -g -c dlamch.f
+#endif

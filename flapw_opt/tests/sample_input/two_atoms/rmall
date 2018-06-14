@@ -1,0 +1,3 @@
+#!/bin/bash
+shopt -s extglob
+rm !(inp|rmall|kpts|enpara|fort.93|struct.xsf|sym.out|fleur_dump.h5)
