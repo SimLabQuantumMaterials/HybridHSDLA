@@ -62,3 +62,9 @@ CMake builds are usually done in an out-of-tree way:
 
 This will configure, compile and install the code: In release mode, with prefix directory .local 
 in the home folder.
+
+## How to cite
+
+If you use **HybridHSDLA** in your research, please use appropriate citation of our work:
+
+    * Davor Davidović, Diego Fabregat-Traver, Markus Höhnerbach, Edoardo di Napoli (2018). Accelerating the computation of FLAPW methods on heterogeneous architectures, [arXiv:1712.07206](https://arxiv.org/abs/1712.07206).
