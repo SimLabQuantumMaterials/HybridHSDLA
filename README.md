@@ -65,6 +65,6 @@ in the home folder.
 
 ## How to cite
 
-If you use **HybridHSDLA** in your research, please use appropriate citation of our work:
+If you use **HybridHSDLA** in your research, please cite the paper:
 
-    * Davor Davidović, Diego Fabregat-Traver, Markus Höhnerbach, Edoardo di Napoli (2018). Accelerating the computation of FLAPW methods on heterogeneous architectures, [arXiv:1712.07206](https://arxiv.org/abs/1712.07206).
+* Davor Davidović, Diego Fabregat-Traver, Markus Höhnerbach, Edoardo di Napoli (2018). *Accelerating the computation of FLAPW methods on heterogeneous architectures*, [[arXiv:1712.07206](https://arxiv.org/abs/1712.07206)].
