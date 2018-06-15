@@ -71,8 +71,8 @@ then
     ###############
     cd flapw_opt/external
     arma_version="8.500.1"
-    wget http://sourceforge.net/projects/arma/files/armadillo-${arma_version}.tar.gz
-    tar -xzf armadillo-${arma_version}.tar.gz
+    wget http://sourceforge.net/projects/arma/files/armadillo-${arma_version}.tar.xz
+    tar -xJvf armadillo-${arma_version}.tar.xz
     mv armadillo-${arma_version} armadillo
     cd ../..
 fi    

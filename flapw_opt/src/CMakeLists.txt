@@ -31,8 +31,7 @@ elseif(TARGET_IMPLEMENTATION MATCHES CPU_STRIPPED)
     set(SPECIFIC_LIBS "-mkl")
 elseif(TARGET_IMPLEMENTATION MATCHES HYBRID)
     set(SPECIFIC_OBJS h_and_s_stripped_v2.cpp wrappers.cpp timing.c 
-                      davor/zherk_hyb.c davor/zher2k_hyb.c davor/zherkx_hyb.c davor/get_ratio.c
-                      davor/test_utils.c)
+                      hybrid/zherk_hyb.c hybrid/zher2k_hyb.c hybrid/zherkx_hyb.c hybrid/utils.c)
     set(SPECIFIC_LIBS ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 elseif(TARGET_IMPLEMENTATION MATCHES DUMP_FLAPW_DATA)
     add_definitions(-DSTRIPPED -DDUMP_FLAPW_DATA)

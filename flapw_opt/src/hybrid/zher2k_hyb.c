@@ -54,6 +54,7 @@
 
 #ifdef MKL
   #include <mkl_service.h>
+  #include <mkl.h>
 #else
   #include <cblas.h>
 #endif
@@ -135,7 +136,7 @@ NTHREADS - Number of threads that will be used in hybrid exection.
     info = 16;
   if ( info != 0 ){
     mesg = "ZHER2K_HYB";
-    xerbla_(mesg, &info);
+    xerbla(mesg, &info, 10);
     return -1*info;
   }
 
@@ -149,7 +150,7 @@ NTHREADS - Number of threads that will be used in hybrid exection.
 
   if( alpha == ZEROZ ){
     
-    zher2k_(&uplo, &trans, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
+    zher2k(&uplo, &trans, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
 
     return info;
   }
@@ -158,7 +159,7 @@ NTHREADS - Number of threads that will be used in hybrid exection.
 
 /*  Get the number of GPU devices  */
 
-  LOG_CUDA_ERROR( cudaGetDeviceCount(&n_gpus) );
+  LOG_CUDA_STATUS( cudaGetDeviceCount(&n_gpus), "cudaGetDeviceCount" );
 
 /*  Get number of threads, if number of threads not given, get max number of threads */
   if( nthreads == 0){
@@ -206,7 +207,7 @@ NTHREADS - Number of threads that will be used in hybrid exection.
 
 /*  Call CUBLASXT routine  */
 //    status = cublasXtZher2k(handle, cu_uplo, cu_trans, GPU_n, k, (const cuDoubleComplex*)&alpha, (cuDoubleComplex *)A, lda, (cuDoubleComplex *)B, ldb, &beta, (cuDoubleComplex *)C, ldc);
-    LOG_CUBLAS_STATUS( cublasXtZher2k(handle, cu_uplo, cu_trans, GPU_n, k, (const cuDoubleComplex*)&alpha, (cuDoubleComplex *)A, lda, (cuDoubleComplex *)B, ldb, &beta, (cuDoubleComplex *)C, ldc) );
+    LOG_CUBLAS_STATUS( cublasXtZher2k(handle, cu_uplo, cu_trans, GPU_n, k, (const cuDoubleComplex*)&alpha, (cuDoubleComplex *)A, lda, (cuDoubleComplex *)B, ldb, &beta, (cuDoubleComplex *)C, ldc), "cublasXtZherk2k" );
 
   }else{
 /*  I'm thread 1 and manage execution on CPUs  */   
@@ -231,7 +232,7 @@ NTHREADS - Number of threads that will be used in hybrid exection.
     openblas_set_num_threads(n_cpus-1);
 #endif
 
-    zher2k_(&uplo, &transa, &CPU_n, &k, &alpha, &A[offset_a], &lda, &B[offset_b], &ldb, &beta, &C[offset_c], &ldc);
+    zher2k(&uplo, &transa, &CPU_n, &k, &alpha, &A[offset_a], &lda, &B[offset_b], &ldb, &beta, &C[offset_c], &ldc);
 
 /*  Then compute the last row-panel (C_10) - 2 zgemm operations  
  *
@@ -252,18 +253,18 @@ NTHREADS - Number of threads that will be used in hybrid exection.
 	offset_c = GPU_n;
 
 	/* First zgemm call */
-    	zgemm_(&transa, &transb, &CPU_n, &GPU_n, &k, &alphaConj, &B[offset_b], &ldb, A, &lda, &betaComplex, &C[offset_c], &ldc);
+    	zgemm(&transa, &transb, &CPU_n, &GPU_n, &k, &alphaConj, &B[offset_b], &ldb, A, &lda, &betaComplex, &C[offset_c], &ldc);
     	/* Second zgemm call */
-    	zgemm_(&transa, &transb, &CPU_n, &GPU_n, &k, &alpha, &A[offset_a], &lda, B, &ldb, &ONEZ, &C[offset_c], &ldc);
+    	zgemm(&transa, &transb, &CPU_n, &GPU_n, &k, &alpha, &A[offset_a], &lda, B, &ldb, &ONEZ, &C[offset_c], &ldc);
 
     }else{
 	offset_c = GPU_n * ldc;
 
     	/* First zgemm call */
-    	zgemm_(&transa, &transb, &GPU_n, &CPU_n, &k, &alphaConj, B, &ldb, &A[offset_a], &lda, &betaComplex, &C[offset_c], &ldc);
+    	zgemm(&transa, &transb, &GPU_n, &CPU_n, &k, &alphaConj, B, &ldb, &A[offset_a], &lda, &betaComplex, &C[offset_c], &ldc);
 
 	/* Second zgemm call */
-    	zgemm_(&transa, &transb, &GPU_n, &CPU_n, &k, &alpha, A, &lda, &B[offset_b], &ldb, &ONEZ, &C[offset_c], &ldc);
+    	zgemm(&transa, &transb, &GPU_n, &CPU_n, &k, &alpha, A, &lda, &B[offset_b], &ldb, &ONEZ, &C[offset_c], &ldc);
     }
   }
 }
