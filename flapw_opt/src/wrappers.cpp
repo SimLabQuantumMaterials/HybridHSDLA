@@ -8,7 +8,7 @@
 
 #include "cx_double.h"
 extern "C" {
-#include "timing.h"
+    #include "timing.h"
 }
 #include "blas.h"
 #include "types4stripped.h"
@@ -27,24 +27,6 @@ extern "C" {
 #endif
 
 #ifdef GPU
-const char* _cublasGetErrorString(cublasStatus_t status)
-{
-    switch(status)
-    {
-        case CUBLAS_STATUS_SUCCESS: return "CUBLAS_STATUS_SUCCESS";
-        case CUBLAS_STATUS_NOT_INITIALIZED: return "CUBLAS_STATUS_NOT_INITIALIZED";
-        case CUBLAS_STATUS_ALLOC_FAILED: return "CUBLAS_STATUS_ALLOC_FAILED";
-        case CUBLAS_STATUS_INVALID_VALUE: return "CUBLAS_STATUS_INVALID_VALUE";
-        case CUBLAS_STATUS_ARCH_MISMATCH: return "CUBLAS_STATUS_ARCH_MISMATCH";
-        case CUBLAS_STATUS_MAPPING_ERROR: return "CUBLAS_STATUS_MAPPING_ERROR";
-        case CUBLAS_STATUS_EXECUTION_FAILED: return "CUBLAS_STATUS_EXECUTION_FAILED";
-        case CUBLAS_STATUS_INTERNAL_ERROR: return "CUBLAS_STATUS_INTERNAL_ERROR";
-    }
-    return "unknown error";
-}
-#endif
-
-#ifdef GPU
 static cublasXtHandle_t handle;
 static int *devices;
 #endif
@@ -60,6 +42,7 @@ extern "C"{
     int zherk_hyb( cublasXtHandle_t handle, char uplo, char trans, int n, int k, double alpha, std::complex<double> *A, int lda, double beta, std::complex<double> *C, int ldc, int nb, double ratio, int nthreads );
     int zher2k_hyb( cublasXtHandle_t handle, char uplo, char trans, int n, int k, std::complex<double> alpha, std::complex<double> *A, int lda, std::complex<double> *B, int ldb, double beta, std::complex<double> *C, int ldc, int nb, double ratio, int nthreads );
     void get_ratio( int nthreads, double *ratio );
+    void LOG_CUBLAS_STATUS(cublasStatus_t status, char *);
 }
 #endif
 
@@ -87,6 +70,44 @@ int get_env_int( char *var )
     return (int)value;
 }
 
+void get_ratio( int dev_count, double* ratio)
+{
+    char var[] = "HTCON_RATIO_FILE";
+    char *ratio_file;
+    FILE *stream;
+    char *line_buffer;
+    size_t len = 0;
+    ssize_t read;
+    int counter = 0;
+
+    ratio_file = getenv( var );
+    if( ratio_file == NULL) 
+	printf("%s unset\n", var);
+
+    stream = fopen(ratio_file, "r");
+    if ( stream == NULL ){
+	fprintf(stderr, "Error opening file: %s (%s:%d)\n", ratio_file, __FILE__, __LINE__);
+	exit(EXIT_FAILURE);
+    }
+
+    /* Check if the ratio file has the number of lines >= dev_count */
+    
+    // TODO
+
+    line_buffer = (char *)malloc(100 * sizeof(char));
+
+    /* Read dev_count-th line from the file and save ratio values */
+    while(read = getline(&line_buffer, &len, stream) != -1){
+	if(++counter == dev_count){
+	    sscanf(line_buffer, "%lf %lf %lf", &ratio[0], &ratio[1], &ratio[2]);
+	    break;
+        }
+    }
+    fclose(stream);
+    free(line_buffer);
+
+}
+
 int dev_init( )
 {
 #if defined HS_CUDA || defined HS_HSTREAMS
@@ -110,71 +131,11 @@ int dev_init( )
         return -2;
     }
 
-    status = cublasXtDeviceSelect(handle, dev_count, devices);
-    if( status != CUBLAS_STATUS_SUCCESS) 
-    {
-        fprintf(stderr, "[ERROR] Set devices: %s\n", _cublasGetErrorString(status)); 
-        return 1;
-    }
-
+    LOG_CUBLAS_STATUS(cublasXtDeviceSelect(handle, dev_count, devices), "cublasXtDevices");
 #ifdef OOC
     nthreads = omp_get_max_threads();
-    //block_size = get_env_int("HTCON_DAV_BS");
-    //if ( block_size == -1 )
-    //{
-    //fprintf(stderr, "[ERROR] Set env variable HTCON_DAV_BS\n");
-    //exit(-1);
-    //}
-//    get_ratio( nthreads, &ratio[0]);
-    /* ratio[0] = zherk
-     * ratio[1] = zher2k
-     * ratio[2] = zherkx
-     */
-    /* Ratio for Jureca */
-    //[4 GPUS]
-/*    if (dev_count == 4)
-    {
-        ratio[0] = 1.0656;
-        ratio[1] = 1.0656;
-        ratio[2] = 1.0729;
-    }
-    //[3 GPUS]
-    else if (dev_count == 3)
-    {
-        ratio[0] = 1.0904;
-        ratio[1] = 1.1;
-        ratio[2] = 1.1;
-    }
-    //[2 GPUS]
-    else if (dev_count == 2)
-    {
-        ratio[0] = 1.1233;
-        ratio[1] = 1.1233;
-        ratio[2] = 1.1206;
-    }
-    //[1 GPUS]
-    else if (dev_count == 1)
-    {
-        ratio[0] = 1.3931;
-        ratio[1] = 1.36;
-        ratio[2] = 1.3709;
-    }
-*/
-    /* Ratio for RZ */
-    //[2 GPUS]
-    if (dev_count == 2)
-    {
-       ratio[0] = 1.0487;
-       ratio[1] = 1.0629;
-       ratio[2] = 1.0584;
-    }
-//  //[1 GPUS]
-    else if (dev_count == 1)
-    {
-       ratio[0] = 1.1033;
-       ratio[1] = 1.11;
-       ratio[2] = 1.1033;
-    }
+
+    get_ratio(dev_count, ratio);
 
     printf("Ratios: [%f, %f, %f]\n", ratio[0], ratio[1], ratio[2]);
 
@@ -283,7 +244,6 @@ void dev_zher2k_( char *uplo, char *trans,  int *n,  int *k,
                                  trans[0] == 'T' ? CUBLAS_OP_T : CUBLAS_OP_C;
 #ifdef OOC
     printf("CALLING ZHER2K_HYB\n");
-    //double ratio_2 = 20;
     zher2k_hyb( handle, uplo[0], trans[0], *n, *k, *alpha, A, *lda, B, *ldb, *beta, C, *ldc, 0, ratio[1], nthreads );
 #else
     cublasXtZher2k( handle, cu_uplo, cu_trans, *n, *k, 

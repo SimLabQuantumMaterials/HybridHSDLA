@@ -32,7 +32,7 @@ const char * cublasGetErrorString(cublasStatus_t status) {
 void LOG_CUDA_STATUS(cudaError_t hret, char *func )
 {
   if (hret != cudaSuccess){
-     printf("%s returned %s. (%s:%d)\n", func, cublasGetErrorString(hret), __FILE__, __LINE__);
+     printf("%s returned %s. (%s:%d)\n", func, cudaGetErrorString(hret), __FILE__, __LINE__);
      abort();
   }
 }

@@ -55,6 +55,7 @@ private:
     // simulation data follows
     std::string data_folder; ///< root folder containing data files
     hid_t h5file; ///< file handle to the hdf data
+    hid_t h5_int_mem_type;
     // "scalars"
     arma::ivec lmax; ///< maximum value of l, 1 entry per type
     arma::ivec lmax_nonsph; ///< like lmax, but for the nonspherical cutoff

@@ -142,7 +142,7 @@ arma::vec3 FleurData::get_kpoint(size_t i) const
  */
 arma::imat FleurData::get_g_mesh(size_t i) const
 {
-    //std::cout << "get_g_mesh: " << i << "  " << num_gpts(i) << std::endl;
+    std::cout << "get_g_mesh: " << i << "  " << num_gpts(i) << std::endl;
     using arma::span;
     return g_mesh(span(), span(0, num_gpts(i)-1), span(i));
 }
@@ -182,6 +182,15 @@ max_mesh_pts(0), num_kpts(0), max_gpoints(0)
     string h5path = j(folder, partmap.at("hdf_name"));
     h5file = H5Fopen(h5path.c_str(),
                            H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (sizeof(arma::sword) == sizeof(int)) {
+	h5_int_mem_type = H5T_NATIVE_INT;
+    } else if (sizeof(arma::sword) == sizeof(long)) {
+	h5_int_mem_type = H5T_NATIVE_LONG;
+    } else if (sizeof(arma::sword) == sizeof(long long)) {
+	h5_int_mem_type = H5T_NATIVE_LLONG;
+    } else {
+	LOG(FATAL) << "Could not detect int datatype.";
+    }
     if (h5file < 0) {
         LOG(FATAL) << "Could not open file: " << h5path;
     }
@@ -257,9 +266,12 @@ void FleurData::hdf_kpts(const std::string loc)
         // ---- actual number of g-pts ----
         const char* fieldname = "num_gpts";
         hid_t t_memb = H5Tget_member_type(dtype, H5Tget_member_index(dtype, fieldname));
-        hid_t t_field = H5Tcreate(H5T_COMPOUND, H5Tget_size(t_memb));
-        //hid_t t_field = H5Tcreate(H5T_COMPOUND, sizeof(int)); // DIEGO
-        H5Tinsert(t_field, fieldname, 0, t_memb);
+        //hid_t t_field = H5Tcreate(H5T_COMPOUND, H5Tget_size(t_memb));
+	LOG(INFO) << "size: "<< H5Tget_size(t_memb);
+        hid_t t_field = H5Tcreate(H5T_COMPOUND, sizeof(arma::sword)); // DIEGO
+        H5Tinsert(t_field, fieldname, 0,  h5_int_mem_type);
+        //H5Tinsert(t_field, fieldname, 0, t_memb);
+        //H5Dread(dset, h5_int_mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, num_gpts.memptr());
         H5Dread(dset, t_field, H5S_ALL, H5S_ALL, H5P_DEFAULT, num_gpts.memptr());
         H5Tclose(t_memb);
         H5Tclose(t_field);
@@ -348,7 +360,8 @@ void FleurData::hdf_lmax(const std::string loc_l, const std::string loc_lnonsph)
     {
         // "spherical"
         hid_t dset = H5Dopen(h5file, loc_l.c_str(), H5P_DEFAULT);
-        H5Dread(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax.memptr());
+        H5Dread(dset, h5_int_mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax.memptr());
+        //H5Dread(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax.memptr());
         //H5Dread(dset, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax.memptr()); // DIEGO
         //LOG(INFO) << "LMAX" << lmax;
         H5Dclose(dset);
@@ -356,7 +369,8 @@ void FleurData::hdf_lmax(const std::string loc_l, const std::string loc_lnonsph)
     {
         // "nonspherical"
         hid_t dset = H5Dopen(h5file, loc_lnonsph.c_str(), H5P_DEFAULT);
-        H5Dread(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax_nonsph.memptr());
+        H5Dread(dset, h5_int_mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax_nonsph.memptr());
+        //H5Dread(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax_nonsph.memptr());
         //H5Dread(dset, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, lmax_nonsph.memptr()); // DIEGO
         H5Dclose(dset);
     }
@@ -403,9 +417,11 @@ void FleurData::hdf_atoms(const std::string locid)
     // read fields individually
     {
         // ---- atom types ----
-        hid_t t_field = H5Tcreate(H5T_COMPOUND, sizeof(int));
+        //hid_t t_field = H5Tcreate(H5T_COMPOUND, sizeof(int));
+	hid_t t_field = H5Tcreate(H5T_COMPOUND, sizeof(arma::sword));
         //hid_t t_field = H5Tcreate(H5T_COMPOUND, sizeof(long int)); // DIEGO
-        H5Tinsert(t_field, "type", 0, H5T_NATIVE_INT);
+        //H5Tinsert(t_field, "type", 0, H5T_NATIVE_INT);
+        H5Tinsert(t_field, "type", 0, h5_int_mem_type);
         H5Dread(d_atoms, t_field, H5S_ALL, H5S_ALL, H5P_DEFAULT, types.memptr());
         //H5Dread(d_atoms, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, types.memptr()); // DIEGO
         LOG(DEBUG) << "types:\n" << types;
