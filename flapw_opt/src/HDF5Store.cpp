@@ -28,7 +28,7 @@ void HDF5Store::add_hsmat(const arma::cx_mat& H,
     hsize_t dims[] = {n, n};
     hid_t dsp = H5Screate_simple(2, dims, NULL);
     // add 1 so that indices are the same as in the fleur dump file
-    auto kind_str = std::to_string(k_index + 1);
+    auto kind_str = std::to_string(static_cast<long long>(k_index) + 1);
     {
         // H-matrix
         hid_t dset = H5Dcreate2(g_hmat, kind_str.c_str(), h5cx, dsp,

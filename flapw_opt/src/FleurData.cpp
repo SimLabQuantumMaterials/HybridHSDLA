@@ -226,7 +226,7 @@ void FleurData::hdf_tmats(const std::string group_loc)
     t_matrices.set_size(num_types);
     // type dataset names start at 1
     for (int type = 1; type <= num_types; ++type) {
-        auto type_str = std::to_string(type);
+        auto type_str = std::to_string(static_cast<long long>(type));
         int n = 0;
         hid_t dset = H5Dopen(g_tmat, type_str.c_str(), H5P_DEFAULT);
         hid_t dtype = H5Dget_type(dset);
@@ -602,7 +602,7 @@ void FleurData::read_pot_files(const std::string prefix)
     potential.set_size(max_mesh_pts, lmax(0)+1);
     RealBinmat vr;
     for (int l = 0; l <= lmax(0); ++l) {
-        vr.read(prefix + std::to_string(l) + ".bin");
+        vr.read(prefix + std::to_string(static_cast<long long>(l)) + ".bin");
         potential.col(l) = vr.get_data();
     }
     assert( (potential.n_rows == max_mesh_pts) && (potential.n_cols == lmax(0) + 1) );
