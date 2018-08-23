@@ -24,7 +24,7 @@
 #endif
 
 /* Timing routines */
-#include "timings.h"
+#include "timing.h"
 #include "kernels.h"
 
 #define MIN_DIM 1000

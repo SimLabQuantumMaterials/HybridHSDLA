@@ -19,7 +19,7 @@
 #include <cublasXt.h>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-
+#include <unistd.h>
 #ifdef MKL
   #include <mkl_service.h>
 #else
@@ -27,7 +27,7 @@
 #endif
 
 extern "C"{
-    #include "timings.h"
+    #include "timing.h"
     void zherk_(char*, char*, int*, int*, double*, std::complex<double>*, int*, double*, std::complex<double>*, int*);
     void zher2k_(char*, char*, int*, int*, std::complex<double>*, std::complex<double>*, int*, std::complex<double>*, int*, double*, std::complex<double>*, int*);
 #ifdef MKL
@@ -102,7 +102,9 @@ void ratio_zherk(cublasXtHandle_t handle, int min_n, int max_n, int max_k, int s
         cudaThreadSynchronize();
         read_clock(&t_end);
         gpu_t = elapsed_time(&t_start, &t_end);
+
         gpu_gflops = (4.0 * (double)GPU_n * (double)max_k * ((double)GPU_n + 1))/(gpu_t*1e3);
+        //gpu_gflops = (4.0 * GPU_n * max_k * (GPU_n + 1))/(gpu_t*1e3);
 
 	/* Compute CPU part */
     	read_clock(&t_start);
